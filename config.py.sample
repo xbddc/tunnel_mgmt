@@ -1,0 +1,10 @@
+def load_config():
+    config = {
+        "openssh_version": 5, 
+        "server_ip": "192.168.0.1",
+        "server_port": 5000,
+        "secret_key": "my_secret_key_goes_here",
+        "password": "my_login_password",
+        "gateway_user": "john"
+        }
+    return config

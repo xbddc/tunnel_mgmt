@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+<head>
+<link rel="stylesheet" href="static/bootstrap.min.css">
+<link rel="stylesheet" href="static/css.css">
+<script src="static/jquery-1.11.0.min.js"></script>
+<script>
+var check_login = function() {
+  $.ajax({url: '/login', method: 'get', dataType: 'json', statusCode: {
+      200: function() {
+        location.href = '/list';
+        return true;
+      },
+      401: function() {
+        $('.splash').show();
+        $('.login-form').show();
+        return false;
+      }
+    }
+  });
+}
+
+$(function() {
+  check_login();
+  $('form').on('submit', function() {
+    $.ajax({url: '/login', method: 'post', dataType: 'json', data: $('form').serialize(), statusCode: {
+        200: function() {
+          setTimeout("check_login()", 1000);
+        },
+        401: function() {
+          $('form .msg').fadeIn();
+          setTimeout("$('form .msg').fadeOut()", 1000);
+          $('form input').val("");
+        }
+      }
+    });
+    return false;
+  });
+});
+</script>
+</head>
+<body class="container">
+<form>
+<div class="login-form">
+  <div class="box col-sm-offset-5 col-sm-2">
+    <div class="col-md-12">Login Password:</div>
+    <div class="col-md-12"><input class="form-control" name="password" type="password"></div>
+    <div class="col-md-12"><div class="msg text-center text-danger">Login incorrect</div></div>
+  </div>
+</div>
+</form>
+<div class="splash"></div>
+</body>
+</html>

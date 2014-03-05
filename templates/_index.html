@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+<head>
+<title>Tunnel Management</title>
+<link rel="stylesheet" href="static/bootstrap.min.css">
+<link rel="stylesheet" href="static/css.css">
+<script src="static/jquery-1.11.0.min.js"></script>
+<script>
+var check_port = function() {
+  $('.srcport, [name=cmd-port]').each(function(k, v) {
+    if ($(v).val() != "")
+      $.ajax({url: '/check-port/'+$(v).val(), method: 'get', dataType: 'json', statusCode: {
+         200: function() {
+           $(v).addClass('port-is-using');
+         },
+         404: function() {
+           $(v).removeClass('port-is-using');
+         }
+      }
+    });
+  });
+}
+
+var close_left_pane = function() {
+  $('.left-pane').css({'left': '-600px'}).attr('data-val', '');
+  $('.splash').hide();
+};
+
+var reload_left_pane = function(id) {
+  $.ajax({url: '/list-port/'+id, method: 'get', dataType: 'json', statusCode: {
+    500: function() {
+      alert("Internal Error");
+    },
+    200: function(d) {
+      $('.port-add-box').find('input').val('');
+      $('.port-container').empty().attr('data-val', id);
+      $.each(d, function(k, v) {
+        var a = $('.hide .port-entry').clone();
+        $.each(['srcport', 'dstport'], function(m, n) {
+          $(a).find('input.'+n).val(v[n]);
+        });
+        if (v['toggle'] == 'on')
+          $(a).find('.slider-frame').addClass('on');
+        $(a).appendTo('.port-container');
+      });
+      $('.left-pane').css({'left': '0px'}).attr('data-val', id);
+      check_port();
+      $('.splash').show();
+    }
+  }});
+};
+
+$(function() {
+  check_port();
+  //setInterval(function() { check_port(); }, 30000);
+  $(document).on('click', '.close-pane', function() {
+    close_left_pane();
+    return false;
+  });
+  $(document).on('click', '.open-pane', function() {
+    var id = $(this).attr('data-val');
+    $(this).parents('.host-container').find('.host-entry').removeClass('selected');
+    $(this).parents('.host-entry').addClass('selected');
+    //close_left_pane();
+    //setTimeout(function(){reload_left_pane(id)}, 400);
+    reload_left_pane(id);
+    $('.left-pane .host').text($(this).parents('.host-entry').find('[name="hostname"]').val());
+    return false;
+  });
+  $(document).on('click', '.add-host', function() {
+    var id = $(this).attr('data-val');
+    $.ajax({url: '/add-host/'+id, method: 'post', data: $('.form'+id).serialize(), statusCode: {
+      500: function() {
+        alert("Internal Error");
+      },
+      200: function(d) {
+        window.location.reload();
+      }
+    }});
+    return false;
+  });
+  $(document).on('click', '.del-host', function() {
+    var id = $(this).attr('data-val');
+
+    if (!confirm("Are you sure to delete this?"))
+        return false;
+
+    $.ajax({url: '/del-host/'+id, method: 'post', data: $('.form'+id).serialize(), statusCode: {
+      500: function() {
+        alert("Internal Error");
+      },
+      200: function() {
+        $('.form'+id).remove();
+      }
+    }});
+    return false;
+  });
+  $(document).on('click', '.add-port', function() {
+    var id = $('.port-container').attr('data-val');
+    $.ajax({url: '/add-port/'+id, method: 'post', data: $('.form-port').serialize(), statusCode: {
+      500: function() {
+        alert("Internal Error");
+      },
+      404: function() {
+        alert("The port is not free for assigning");
+      },
+      400: function() {
+        alert("empty field?");
+      },
+      200: function() {
+        reload_left_pane(id);
+      }
+    }});
+    return false;
+  });
+  $(document).on('click', '.toggle-port', function() {
+    var id = $('.port-container').attr('data-val');
+    var srcport = $(this).parents('.port-entry').find('input.srcport').val();
+    var dstport = $(this).parents('.port-entry').find('input.dstport').val();
+    var toggle = $(this).parents('.slider-frame').hasClass('on') ? 'off' : 'on';
+    var button = this;
+
+    $.ajax({url: '/toggle-port/'+id, method: 'post', data: 'srcport='+srcport+'&dstport='+dstport+'&toggle='+toggle, statusCode: {
+      500: function() {
+        alert("Internal Error");
+      },
+      200: function() {
+        $(button).parents('.slider-frame').toggleClass('on');
+        check_port();
+        return true;
+      }
+    }});
+    return false;
+  });
+  $(document).on('click', '.del-port', function() {
+    var id = $('.port-container').attr('data-val');
+    var srcport = $(this).parents('.port-entry').find('input.srcport').val();
+    var dstport = $(this).parents('.port-entry').find('input.dstport').val();
+
+    if (!confirm("Are you sure to delete this?"))
+        return false;
+
+    $.ajax({url: '/del-port/'+id, method: 'post', data: 'srcport='+srcport+'&dstport='+dstport, statusCode: {
+      500: function() {
+        alert("Internal Error");
+      },
+      200: function() {
+        reload_left_pane(id);
+      }
+    }});
+    return false;
+  });
+  $(document).on('click', '.logout-btn', function() {
+    $.ajax({url: '/login', method: 'post', data: "password=''", statusCode: {
+      401: function(d) {
+        window.location.reload();
+      }
+    }});
+    return false;
+  });
+});
+</script>
+</head>
+<body class="container">
+<div class="splash"></div>
+<button class="logout-btn btn btn-danger">Logout</button>
+
+
+<div>
+  <form class="form-port">
+    <div class="left-pane">
+      <div class="row p1">
+        <div class="col-xs-12"><h3>Set forwarding for host "<span class="host"></span>"</h3></div>
+      </div>
+      <div class="row">
+        <div class="col-xs-1"></div>
+        <div class="col-xs-3">Bind port</div>
+        <div class="col-xs-3">VM port</div>
+        <div class="col-xs-2">Action</div>
+      </div>
+      <div class="row port-add-box">
+        <div class="col-xs-1"></div>
+        <div class="col-xs-3"><input class="form-control" name="srcport"></div>
+        <div class="col-xs-3"><input class="form-control" name="dstport"></div>
+        <div class="col-xs-2"><button class="add-port btn btn-default">Add</button></div>
+      </div>
+      <div class="port-container">
+      </div>
+      <div class="row">
+        <div class="col-xs-12 text-center"><button class="close-pane btn btn-link btn-block">Finish</button></div>
+      </div>
+    </div>
+  </form>
+</div>
+
+
+<div class="col-md-offset-2 col-md-8 host-container">
+  <h2 class="text-center">Tunnel Management</h2>
+  <div class="clientsetup">
+    <strong>Client Setup</strong>
+    <code>$ wget -O launch.py http://{{ ip }}:{{ port }}/getpy &amp;&amp; python launch.py</code>
+  </div>
+  <form class="form">
+  <div class="host-add-box">
+    <div class="row">
+      <div class="col-xs-3 text-right">
+        Name
+      </div>
+      <div class="col-xs-3">
+        <input class="form-control" name="hostname" value="">
+      </div>
+      <div class="col-xs-3 text-right">
+        Command port
+      </div>
+      <div class="col-xs-3">
+        <input class="form-control" name="cmd-port" value="">
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-3 text-right">
+        SSH Public Key
+      </div>
+      <div class="col-xs-9">
+        <textarea class="form-control" name="key" placeholder="Paste your ssh public key here to creating reverse tunnel"></textarea>
+      </div>
+      <div class="col-xs-12 text-right">
+        <button class="add-host btn btn-primary" data-val="" type="submit">Create</button>
+      </div>
+    </div>
+  </div>
+  </form>
+  {% for line in lines %}
+  <form class="form{{ line['_id'] }}">
+  <div class="host-entry">
+    <div class="row">
+      <div class="col-xs-3 text-right">
+        Name
+      </div>
+      <div class="col-xs-3">
+        <input class="form-control" name="hostname" value="{{ line['hostname'] }}" disabled>
+      </div>
+      <div class="col-xs-3 text-right">
+        Command Port
+      </div>
+      <div class="col-xs-3">
+        <input class="form-control" name="cmd-port" value="{{ line['cmd-port'] }}" disabled>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-3 text-right">
+        SSH Public Key
+      </div>
+      <div class="col-xs-9">
+        <textarea class="form-control" name="key" disabled>{{ line['key'] }}</textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12 text-right">
+        <button class="open-pane btn btn-default" data-val="{{ line['_id'] }}">Forwarding</button>
+        <button class="del-host btn btn-danger btn-link" data-val="{{ line['_id'] }}">Delete</button>
+      </div>
+    </div>
+  </div>
+  </form>
+  {% endfor %}
+</div>
+
+<div class="hide">
+  <div class="row port-entry">
+    <div class="col-xs-1"></div>
+    <div class="col-xs-3"><input class="form-control srcport" disabled></div>
+    <div class="col-xs-3"><input class="form-control dstport" disabled></div>
+    <div class="col-xs-2">
+      <div class="slider-frame">
+        <div class="toggle-port slider-button"></div>
+      </div>
+    </div>
+    <div class="col-xs-2"><button class="del-port btn btn-link">Remove</button></div>
+  </div>
+</div>
+
+</body>
+</html>
