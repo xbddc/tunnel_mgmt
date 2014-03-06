@@ -82,7 +82,7 @@ def make_authorized_keys():
         buf = ""
         for line in db.keys.find():
             buf += line['key'] + "\n"
-        f = open(".ssh/authorized_keys", "w")
+        f = open(os.path.expanduser('~/.ssh/authorized_keys'), 'w')
         f.write(buf)
         f.close()
     except:
@@ -109,7 +109,7 @@ def login():
 
 @app.route("/getkey")
 def getkey():
-    return open('.ssh/id_rsa.pub', 'r').read()
+    return open(os.path.expanduser('~/.ssh/id_rsa.pub'), 'r').read()
 
 
 @app.route("/getpy")
