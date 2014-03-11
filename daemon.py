@@ -101,7 +101,6 @@ def login():
             session['logged'] = False
             abort(401)
     else:
-        print session
         if 'logged' in session and session['logged'] == True:
             return ''
         abort(401)
@@ -127,7 +126,7 @@ def index():
 
 @app.route("/list")
 def list():
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         return redirect(url_for('index'))
 
     lines = []
@@ -143,7 +142,7 @@ def list():
 @app.route("/add-host/", methods=['POST'])
 @app.route("/mod-host/<id>", methods=['POST'])
 def add_host(id=None):
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         abort(401)
 
     try:
@@ -162,7 +161,7 @@ def add_host(id=None):
 
 @app.route("/del-host/<id>", methods=['POST'])
 def del_host(id):
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         abort(401)
 
     try:
@@ -194,7 +193,7 @@ def check_port(port):
 
 @app.route("/add-port/<id>", methods=['POST'])
 def add_port(id):
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         abort(401)
 
     try:
@@ -226,7 +225,7 @@ def add_port(id):
 
 @app.route("/toggle-port/<id>", methods=['POST'])
 def toggle_port(id):
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         abort(401)
 
     try:
@@ -249,7 +248,7 @@ def toggle_port(id):
 
 @app.route("/del-port/<id>", methods=['POST'])
 def del_port(id):
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         abort(401)
 
     try:
@@ -272,7 +271,7 @@ def del_port(id):
 
 @app.route("/list-port/<id>")
 def list_port(id=None):
-    if 'logged' in session and session['logged'] != True:
+    if 'logged' not in session or session['logged'] != True:
         abort(401)
 
     ports = []
