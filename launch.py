@@ -38,10 +38,13 @@ client_user = getpass.getuser()
 while os.system('ssh -t %s@%s -R0:%d:0:22 ssh -t %s@localhost -p%d exit' % (gateway_user, ip, cmd_port, client_user, cmd_port)) != 0:
     print 'retry'
 
-cmd = 'autossh %s@%s -R0:%d:0:22 -f curl %s:%d/reconnect-ports/%d' % (gateway_user, ip, cmd_port, ip, port, cmd_port)
+cmd = []
+cmd.append('autossh %s@%s -R0:%d:0:22 -Nf' % (gateway_user, ip, cmd_port))
+cmd.append('ssh %s@%s wget -q %sreconnect-ports/%d' % (url, ip, port, cmd_port))
 print 'Start autossh ...' 
-print cmd
-os.system(cmd)
-print '\n-----\nYou can also add this line into /etc/rc.local for launching autossh at reboot.\n-----\n'
-print 'su - %s -c "%s"' % (client_user, cmd)
+print cmd[0]
+os.system(cmd[0])
+print '\n-----\nYou can also add these lines into /etc/rc.local for launching autossh at reboot.\n-----\n'
+print 'su - %s -c "%s"' % (client_user, cmd[0])
+print 'su - %s -c "%s"' % (client_user, cmd[1])
 print '\nAll done.'
