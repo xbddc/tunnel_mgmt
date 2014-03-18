@@ -7,7 +7,8 @@ import getpass
 
 gateway_user = '{{ gateway_user }}'
 ip = '{{ ip }}'
-url = 'http://%s:{{ port }}/' % ip
+port = {{ port }}
+url = 'http://%s:%d/' % (ip, port)
 cmd_port = int(urllib2.urlopen('%sgen-port' % url).read())
 
 if not os.path.isdir('.ssh'):
@@ -37,7 +38,7 @@ client_user = getpass.getuser()
 while os.system('ssh -t %s@%s -R0:%d:0:22 ssh -t %s@localhost -p%d exit' % (gateway_user, ip, cmd_port, client_user, cmd_port)) != 0:
     print 'retry'
 
-cmd = 'autossh %s@%s -R0:%d:0:22 -Nf' % (gateway_user, ip, cmd_port)
+cmd = 'autossh %s@%s -R0:%d:0:22 -f curl %s:%d/reconnect-ports/%d' % (gateway_user, ip, cmd_port, ip, port, cmd_port)
 print 'Start autossh ...' 
 print cmd
 os.system(cmd)

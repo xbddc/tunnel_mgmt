@@ -63,12 +63,16 @@ def connect_ports(res):
     return True
 
 
+def kill_ssh_connection(res):
+    if os.path.exists('/tmp/ssh-ctl-%d' % int(res['cmd-port'])) != False:
+        os.system('ssh -S /tmp/ssh-ctl-%d -p%d %s@localhost -O exit' % \
+            (int(res['cmd-port']), int(res['cmd-port']), res['user']))
+        time.sleep(.5)
+
+
 def update_ssh_forwarding(res, post_port):
    if config['openssh_version'] == 5:
-       if os.path.exists('/tmp/ssh-ctl-%d' % int(res['cmd-port'])) != False:
-           os.system('ssh -S /tmp/ssh-ctl-%d -p%d %s@localhost -O exit' % \
-               (int(res['cmd-port']), int(res['cmd-port']), res['user']))
-           time.sleep(.5)
+       kill_ssh_connection(res)
    elif config['openssh_version'] == 6:
        if os.path.exists('/tmp/ssh-ctl-%d' % int(res['cmd-port'])) != False:
            os.system('ssh -S /tmp/ssh-ctl-%d -p%d %s@localhost -O cancel -L%s:%d:0:%d' % \
@@ -119,6 +123,13 @@ def getpy():
         .replace('{{ port }}', str(config['server_port']))
 
 
+@app.route("/reconnect-ports/<port>")
+def reconnect_ports(port):
+    res = db.keys.find_one({"cmd-port": port})
+    connect_ports(res)
+    return ''
+
+
 @app.route("/")
 def index():
     return render_template('_login.html')
@@ -165,6 +176,8 @@ def del_host(id):
         abort(401)
 
     try:
+        res = db.keys.find_one({"_id": ObjectId(id)})
+        kill_ssh_connection(res)
         db.keys.remove({"_id": ObjectId(id)})
     except:
         print traceback.format_exc()
@@ -231,12 +244,15 @@ def toggle_port(id):
     try:
         res = db.keys.find_one({"_id": ObjectId(id)})
         post_port = request.form.copy()
+        found = 0
         for idx, port in enumerate(res['ports']):
             if port['srcport'] == post_port['srcport'] and port['dstport'] == post_port['dstport']:
                 res['ports'][idx]['toggle'] = post_port['toggle']
+                found = 1
                 break
-        ret = db.keys.update({"_id": ObjectId(id)}, res)
-        update_ssh_forwarding(res, post_port)
+        if found == 1:
+            ret = db.keys.update({"_id": ObjectId(id)}, res)
+            update_ssh_forwarding(res, post_port)
 
     except:
         print traceback.format_exc()
@@ -284,6 +300,7 @@ def list_port(id=None):
         abort(500)
     print ports
     return json.dumps(ports)
+
 
 if __name__ == "__main__":
     config = load_config()
