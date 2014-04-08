@@ -10,6 +10,8 @@ ip = '{{ ip }}'
 port = {{ port }}
 url = 'http://%s:%d/' % (ip, port)
 cmd_port = int(urllib2.urlopen('%sgen-port' % url).read())
+old_cwd = os.getcwd()
+os.chdir(os.path.expanduser('~/'))
 
 if not os.path.isdir('.ssh'):
     os.mkdir('.ssh', 0700)
@@ -40,7 +42,7 @@ while os.system('ssh -t %s@%s -R0:%d:0:22 ssh -t %s@localhost -p%d exit' % (gate
 
 cmd = []
 cmd.append('autossh %s@%s -R0:%d:0:22 -Nf' % (gateway_user, ip, cmd_port))
-cmd.append('ssh %s@%s wget -q %sreconnect-ports/%d' % (url, ip, port, cmd_port))
+cmd.append('ssh %s@%s wget -q %sreconnect-ports/%d' % (gateway_user, ip, url, cmd_port))
 print 'Start autossh ...' 
 print cmd[0]
 os.system(cmd[0])
@@ -48,3 +50,4 @@ print '\n-----\nYou can also add these lines into /etc/rc.local for launching au
 print 'su - %s -c "%s"' % (client_user, cmd[0])
 print 'su - %s -c "%s"' % (client_user, cmd[1])
 print '\nAll done.'
+os.chdir(old_cwd)
