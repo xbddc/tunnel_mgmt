@@ -157,10 +157,15 @@ def add_host(id=None):
         abort(401)
 
     try:
+        assert request.form['key']
+        assert request.form['cmd_port']
+        assert request.form['hostname']
         if check_key(request.form['key']):
             post_host = request.form.copy()
             post_host['user'] = post_host['key'].split(' ')[2].split('@')[0]
             res = db.keys.update({"_id": ObjectId(id)}, post_host, upsert=True)
+    except AssertionError:
+        abort(400)
     except:
         print traceback.format_exc()
         abort(500)

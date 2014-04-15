@@ -70,6 +70,9 @@ $(function() {
   $(document).on('click', '.add-host', function() {
     var id = $(this).attr('data-val');
     $.ajax({url: '/add-host/'+id, method: 'post', data: $('.form'+id).serialize(), statusCode: {
+      400: function() {
+        alert("Incomplete Form");
+      },
       500: function() {
         alert("Internal Error");
       },
