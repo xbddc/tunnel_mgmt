@@ -158,7 +158,7 @@ def add_host(id=None):
 
     try:
         assert request.form['key']
-        assert request.form['cmd_port']
+        assert request.form['cmd-port']
         assert request.form['hostname']
         if check_key(request.form['key']):
             post_host = request.form.copy()
