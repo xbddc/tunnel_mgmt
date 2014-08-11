@@ -108,7 +108,7 @@ input, textarea, button, label {
 }
 
 textarea.form-control {
-  height: 10em;
+  height: 11em;
   margin-bottom: 1em;
 }
 
@@ -160,4 +160,8 @@ textarea.form-control {
 
 .p1 {
   padding: 1em;
+}
+
+.btn-link:hover, .btn-link:focus {
+  text-decoration: none;
 }

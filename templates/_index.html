@@ -2,9 +2,10 @@
 <html>
 <head>
 <title>Tunnel Management</title>
-<link rel="stylesheet" href="static/bootstrap.min.css">
-<link rel="stylesheet" href="static/css.css">
-<script src="static/jquery-1.11.0.min.js"></script>
+<link rel="stylesheet" href="static/css/bootstrap.min.css">
+<link rel="stylesheet" href="static/css/font-awesome.min.css">
+<link rel="stylesheet" href="static/css/css.css">
+<script src="static/js/jquery-1.11.0.min.js"></script>
 <script>
 var check_port = function() {
   $('.srcport, [name=cmd-port]').each(function(k, v) {
@@ -55,6 +56,10 @@ $(function() {
   //setInterval(function() { check_port(); }, 30000);
   $(document).on('click', '.close-pane', function() {
     close_left_pane();
+    return false;
+  });
+  $(document).on('click', '.toggle-key', function() {
+    $(this).parents('.row').next().toggleClass('hide');
     return false;
   });
   $(document).on('click', '.open-pane', function() {
@@ -213,7 +218,7 @@ $(function() {
         <input class="form-control" name="hostname" value="">
       </div>
       <div class="col-xs-3 text-right">
-        Command port
+        Command Port
       </div>
       <div class="col-xs-3">
         <input class="form-control" name="cmd-port" value="">
@@ -224,7 +229,7 @@ $(function() {
         SSH Public Key
       </div>
       <div class="col-xs-9">
-        <textarea class="form-control" name="key" placeholder="Paste your ssh public key here to creating reverse tunnel"></textarea>
+        <textarea class="form-control" name="key" placeholder="Paste your ssh public key here to create reverse tunnel"></textarea>
       </div>
       <div class="col-xs-12 text-right">
         <button class="add-host btn btn-primary" data-val="" type="submit">Create</button>
@@ -232,40 +237,49 @@ $(function() {
     </div>
   </div>
   </form>
-  {% for line in lines %}
-  <form class="form{{ line['_id'] }}">
   <div class="host-entry">
     <div class="row">
-      <div class="col-xs-3 text-right">
+      <div class="col-xs-5">
         Name
       </div>
-      <div class="col-xs-3">
-        <input class="form-control" name="hostname" value="{{ line['hostname'] }}" disabled>
-      </div>
-      <div class="col-xs-3 text-right">
+      <div class="col-xs-4">
         Command Port
       </div>
       <div class="col-xs-3">
-        <input class="form-control" name="cmd-port" value="{{ line['cmd-port'] }}" disabled>
+        Action
       </div>
     </div>
     <div class="row">
-      <div class="col-xs-3 text-right">
-        SSH Public Key
+    </div>
+  {% for line in lines %}
+  <form class="form{{ line['_id'] }}">
+    <div class="row">
+      <div class="col-xs-5">
+        <input class="form-control" name="hostname" value="{{ line['hostname'] }}" disabled>
       </div>
-      <div class="col-xs-9">
+      <div class="col-xs-4">
+        <input class="form-control" name="cmd-port" value="{{ line['cmd-port'] }}" disabled>
+      </div>
+      <div class="col-xs-3 text-center">
+        <div class="btn-group">
+          <button class="open-pane btn btn-default" data-val="{{ line['_id'] }}" title="Forwarding"><i class="fa fa-mail-forward"></i></button>
+          <button class="toggle-key btn btn-default" data-val="{{ line['_id'] }}" title="Show Public Key"><i class="fa fa-key"></i></button>
+          <button class="del-host btn btn-default" data-val="{{ line['_id'] }}" title="Delete"><i style="color: #d9534f" class="fa fa-trash-o"></i></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row hide">
+      <div class="col-xs-12">
         <textarea class="form-control" name="key" disabled>{{ line['key'] }}</textarea>
       </div>
     </div>
+
     <div class="row">
-      <div class="col-xs-12 text-right">
-        <button class="open-pane btn btn-default" data-val="{{ line['_id'] }}">Forwarding</button>
-        <button class="del-host btn btn-danger btn-link" data-val="{{ line['_id'] }}">Delete</button>
-      </div>
     </div>
-  </div>
   </form>
   {% endfor %}
+  </div>
 </div>
 
 <div class="hide">
