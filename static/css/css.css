@@ -123,6 +123,7 @@ textarea.form-control {
   width: 600px;
   height: 100%;
   box-shadow: 0 0 5px #767879;
+  overflow-y: scroll;
 }
 
 .port-container {

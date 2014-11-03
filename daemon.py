@@ -147,7 +147,7 @@ def list():
     except:
         print traceback.format_exc()
         pass
-    return render_template('_index.html', lines=lines, ip=config['server_ip'], port=config['server_port'])
+    return render_template('_index.html', lines=lines[::-1], ip=config['server_ip'], port=config['server_port'])
 
 
 @app.route("/add-host/", methods=['POST'])
