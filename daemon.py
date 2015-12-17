@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from flask import Flask, url_for, render_template, request, session, redirect, abort
-from pymongo import MongoClient
-from bson.objectid import ObjectId
-from config import load_config
 import subprocess
 import json
 import random
 import traceback
 import os
 import time
+
+from flask import Flask, url_for, render_template, request, session, redirect, abort
+from pymongo import MongoClient
+from bson.objectid import ObjectId
+
+from config import load_config
 
 app = Flask(__name__)
 db = MongoClient().ssh
@@ -55,7 +57,7 @@ def connect_ports(res):
             if 'toggle' in port and port['toggle'] == 'on':
                 print "start port "+port['srcport']
                 os.system('ssh -S /tmp/ssh-ctl-%d -p%d %s@localhost -O forward -L%s:%d:0:%d' % \
-                    (int(res['cmd-port']), int(res['cmd-port']), res['user'], config['server_ip'], \
+                    (int(res['cmd-port']), int(res['cmd-port']), res['user'], config['interface_ip'], \
                     int(port['srcport']), int(port['dstport'])))
     except:
         print traceback.format_exc()
@@ -76,7 +78,7 @@ def update_ssh_forwarding(res, post_port):
    elif config['openssh_version'] == 6:
        if os.path.exists('/tmp/ssh-ctl-%d' % int(res['cmd-port'])) != False:
            os.system('ssh -S /tmp/ssh-ctl-%d -p%d %s@localhost -O cancel -L%s:%d:0:%d' % \
-               (int(res['cmd-port']), int(res['cmd-port']), res['user'], config['server_ip'], \
+               (int(res['cmd-port']), int(res['cmd-port']), res['user'], config['interface_ip'], \
                int(post_port['srcport']), int(post_port['dstport'])))
    connect_ports(res)
 
@@ -190,6 +192,17 @@ def del_host(id):
 
     make_authorized_keys()
     return ''
+
+
+@app.route("/get-port/<hostname>")
+def get_port_by_hostname(hostname):
+    res = db.portmap.find_one({"hostname": hostname})
+    if res and 'port' in res:
+        return str(res['port'])
+
+    record = {'hostname': hostname, 'port': gen_port()}
+    res = db.portmap.update({"_id": ObjectId(None)}, record, upsert=True)
+    return str(record['port'])
 
 
 @app.route("/gen-port")
@@ -310,4 +323,4 @@ def list_port(id=None):
 if __name__ == "__main__":
     config = load_config()
     app.secret_key = config['secret_key']
-    app.run(host=config['server_ip'], port=config['server_port'])
+    app.run(host="0.0.0.0", port=config['server_port'])
